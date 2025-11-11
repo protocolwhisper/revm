@@ -27,6 +27,8 @@ pub enum PrecompileId {
     Blake2F,
     /// Verify p(z) = y given commitment that corresponds to the polynomial p(x) and a KZG proof. Also verify that the provided commitment matches the provided versioned_hash.
     KzgPointEvaluation,
+    /// Verify multiple points in one go with a single pairing operation.
+    KzgMultipointEvaluation,
     /// Point addition in G1 (curve over base prime field).
     Bls12G1Add,
     /// Multi-scalar-multiplication (MSM) in G1 (curve over base prime field).
@@ -69,6 +71,7 @@ impl PrecompileId {
             Self::Bn254Pairing => "BN254_PAIRING",
             Self::Blake2F => "BLAKE2F",
             Self::KzgPointEvaluation => "KZG_POINT_EVALUATION",
+            Self::KzgMultipointEvaluation => "KZG_MULTIPOINT_EVALUATION",
             Self::Bls12G1Add => "BLS12_G1ADD",
             Self::Bls12G1Msm => "BLS12_G1MSM",
             Self::Bls12G2Add => "BLS12_G2ADD",
@@ -131,6 +134,7 @@ impl PrecompileId {
             }
             Self::Blake2F => crate::blake2::FUN,
             Self::KzgPointEvaluation => crate::kzg_point_evaluation::POINT_EVALUATION,
+            Self::KzgMultipointEvaluation => crate::kzg_multipoint_evaluation::MULTIPOINT_EVALUATION,
             Self::Bls12G1Add => crate::bls12_381::g1_add::PRECOMPILE,
             Self::Bls12G1Msm => crate::bls12_381::g1_msm::PRECOMPILE,
             Self::Bls12G2Add => crate::bls12_381::g2_add::PRECOMPILE,
