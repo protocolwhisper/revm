@@ -8,6 +8,8 @@ pub mod arkworks;
 #[cfg(feature = "blst")]
 pub mod blst;
 
+pub mod multipoint;
+
 use primitives::hex_literal::hex;
 
 /// KZG point evaluation precompile, containing address and function to run.
