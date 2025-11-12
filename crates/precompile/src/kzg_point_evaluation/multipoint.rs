@@ -1,5 +1,4 @@
-
-//Implementation of the multipoint evaluation for kzg
+//! Implementation of the multipoint evaluation for KZG.
 
 use crate::bls12_381::arkworks::pairing_check;
 use crate::PrecompileError;
@@ -13,19 +12,32 @@ use core::ops::Neg;
 /// Previous work (Point evaluation)
 /// <https://github.com/ethereum/EIPs/blob/4d2a00692bb131366ede1a16eced2b0e25b1bf99/EIPS/eip-4844.md?plain=1#L203>
 /// So point evaluation was an eip this might conduct that the multipoint evaluation can turn into one 
-/// 
+
 
 //This can be updated but for this PoC it's ok 
 
-const MAX_EVALUATION_POINTS: usize = 128;
-
-type Multiproof =  G2Affine;
+pub const MAX_EVALUATION_POINTS: usize = 128;
 
 #[inline]
-fn verify_kzg_multipoint_proof(
+/// Verify KZG multipoint evaluation proof.
+///
+/// Verifies that a polynomial commitment is consistent with multiple point evaluations
+/// using a single multiproof. This is more gas-efficient than verifying each point separately.
+///
+/// # Arguments
+/// * `commitment` - Compressed G1 point commitment to the polynomial
+/// * `z_values` - Array of evaluation points (field elements)
+/// * `y_values` - Array of evaluation values (field elements)
+/// * `proof` - Compressed G2 point multiproof
+/// * `i_tau` - Compressed G1 point commitment to the interpolation polynomial
+/// * `z_commit` - Compressed G1 point commitment to the zero polynomial
+///
+/// # Returns
+/// `true` if the proof is valid, `false` otherwise
+pub fn verify_kzg_multipoint_proof(
     commitment: &[u8; 48],
-    z_values: &[u8;48],
-    y_values: &[u8;48],
+    z_values: &[[u8; 32]],
+    y_values: &[[u8; 32]],
     proof: &[u8; 96], //Is this cause it's living in the field extension?
     i_tau: &[u8; 48],
     z_commit: &[u8; 48],
@@ -47,18 +59,27 @@ fn verify_kzg_multipoint_proof(
         return false;
     };
 
+    let Ok(z_commit_point) = parse_g1_compressed(z_commit) else {
+        return false;
+    };
+
+    //Parse i_tau as G1 point
+    let Ok(i_tau_point) = parse_g1_compressed(i_tau) else {
+        return false;
+    };
+
     //Parse the evaluation points 
 
     for i in 0..z_values.len() {
-        if read_scalar_canonical(z_values[i]).is_err() {
+        if read_scalar_canonical(&z_values[i]).is_err() {
             return false;
         }
-        if read_scalar_canonical(y_values[i]).is_err() {
+        if read_scalar_canonical(&y_values[i]).is_err() {
             return false;
         }
     }
 
-    let commitment_minus_i = p1_sub_affine(&commitment_point, &i_tau);
+    let commitment_minus_i = p1_sub_affine(&commitment_point, &i_tau_point);
 
     let g2 = get_g2_generator();
     let commitment_minus_i_neg = p1_neg(&commitment_minus_i);
